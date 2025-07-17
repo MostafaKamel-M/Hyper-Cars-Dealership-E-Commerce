@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Cars</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --background-color: #f5f6fa;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .btn-dashboard {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-dashboard:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-add-car {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+        }
+
+        .cars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 20px 0;
+        }
+
+        .car-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .car-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .car-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .car-info {
+            padding: 20px;
+        }
+
+        .car-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .car-price {
+            color: var(--accent-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .car-details {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .car-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-edit {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            flex: 1;
+        }
+
+        .btn-delete {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            flex: 1;
+        }
+
+        .no-image-placeholder {
+            width: 100%;
+            height: 200px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-car me-3"></i> Manage Cars</h1>
+            <div class="d-flex gap-3">
+                <a href="{% url 'staff_dashboard' %}" class="btn btn-dashboard">
+                    <i class="fas fa-arrow-left me-2"></i>Dashboard
+                </a>
+                <button class="btn btn-add-car" data-bs-toggle="modal" data-bs-target="#addCarModal">
+                    <i class="fas fa-plus me-2"></i>Add New Car
+                </button>
+                <a href="{% url 'logout' %}" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} fade show">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="cars-grid">
+            {% if cars %}
+                {% for car in cars %}
+                <div class="car-card">
+                    {% if car.images.all %}
+                        <img src="{{ car.images.first.image.url }}" alt="{{ car.make }} {{ car.model }}" class="car-image">
+                    {% else %}
+                        <div class="no-image-placeholder">
+                            <i class="fas fa-car fa-2x"></i>
+                        </div>
+                    {% endif %}
+                    <div class="car-info">
+                        <h3 class="car-title">{{ car.make }} {{ car.model }}</h3>
+                        <div class="car-price">${{ car.price }}</div>
+                        <div class="car-details">
+                            <span><i class="fas fa-calendar me-2"></i>{{ car.year }}</span>
+                            <span><i class="fas fa-cog me-2"></i>{{ car.transmission }}</span>
+                        </div>
+                        <div class="car-actions">
+                            <a href="{% url 'edit_car' car.id %}" class="btn btn-edit">
+                                <i class="fas fa-edit me-2"></i>Edit
+                            </a>
+                            <button onclick="deleteCar({{car.id}})" class="btn btn-delete">
+                                <i class="fas fa-trash me-2"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No cars available. Add your first car using the "Add New Car" button above.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Add Car Modal -->
+    <div class="modal fade" id="addCarModal" tabindex="-1" aria-labelledby="addCarModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCarModalLabel">Add New Car</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{% url 'add_car' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="make">Make</label>
+                            <input type="text" class="form-control" id="make" name="make" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Model</label>
+                            <input type="text" class="form-control" id="model" name="model" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="power">Power</label>
+                            <input type="text" class="form-control" id="power" name="power" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="year">Year</label>
+                            <input type="text" class="form-control" id="year" name="year" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <select class="form-control" id="category" name="category" required>
+                                <option value="american">American</option>
+                                <option value="german">German</option>
+                                <option value="japanese">Japanese</option>
+                                <option value="italian">Italian</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea class="form-control" id="description" name="description"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Price</label>
+                            <input type="number" class="form-control" id="price" name="price" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="stock">Stock</label>
+                            <input type="number" class="form-control" id="stock" name="stock" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="images">Images</label>
+                            <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label for="type">Type</label>
+                            <input type="text" class="form-control" id="type" name="type" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="transmission">Transmission</label>
+                            <input type="text" class="form-control" id="transmission" name="transmission" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="gas">Gas</label>
+                            <input type="text" class="form-control" id="gas" name="gas" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Car Modals -->
+    {% for car in cars %}
+    <div class="modal fade" id="editCarModal{{ car.id }}" tabindex="-1" aria-labelledby="editCarModalLabel{{ car.id }}" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCarModalLabel{{ car.id }}">Edit Car</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{% url 'edit_car' car.id %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="make">Make</label>
+                            <input type="text" class="form-control" id="make" name="make" value="{{ car.make }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Model</label>
+                            <input type="text" class="form-control" id="model" name="model" value="{{ car.model }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="power">Power</label>
+                            <input type="text" class="form-control" id="power" name="power" value="{{ car.power }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="year">Year</label>
+                            <input type="text" class="form-control" id="year" name="year" value="{{ car.year }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <select class="form-control" id="category" name="category" required>
+                                <option value="american" {% if car.category == "american" %}selected{% endif %}>American</option>
+                                <option value="german" {% if car.category == "german" %}selected{% endif %}>German</option>
+                                <option value="japanese" {% if car.category == "japanese" %}selected{% endif %}>Japanese</option>
+                                <option value="italian" {% if car.category == "italian" %}selected{% endif %}>Italian</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea class="form-control" id="description" name="description">{{ car.description }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Price</label>
+                            <input type="number" class="form-control" id="price" name="price" value="{{ car.price }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="stock">Stock</label>
+                            <input type="number" class="form-control" id="stock" name="stock" value="{{ car.stock }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="images">Images</label>
+                            <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label for="type">Type</label>
+                            <input type="text" class="form-control" id="type" name="type" value="{{ car.type }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="transmission">Transmission</label>
+                            <input type="text" class="form-control" id="transmission" name="transmission" value="{{ car.transmission }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="gas">Gas</label>
+                            <input type="text" class="form-control" id="gas" name="gas" value="{{ car.gas }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function deleteCar(carId) {
+            if (confirm('Are you sure you want to delete this car?')) {
+                window.location.href = `/delete-car/${carId}/`;
+            }
+        }
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.display = 'none';
+            });
+        }, 3000);
+    </script>
+</body>
+</html>
