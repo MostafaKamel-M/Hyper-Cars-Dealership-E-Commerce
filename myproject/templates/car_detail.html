@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ car.make }} {{ car.model }} - Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --accent-color: #d4af37;
+            --text-light: #ffffff;
+            --text-dark: #1a1a1a;
+            --bg-gradient: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .navbar {
+            background-color: #222;
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .navbar-brand:hover {
+            color: white;
+        }
+
+        .nav-link {
+            color: white !important;
+            font-size: 1rem;
+            padding: 0 1.2rem !important;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #ddd !important;
+        }
+
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .car-detail-container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .car-image-container {
+            position: relative;
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            touch-action: none; 
+            -webkit-user-select: none; 
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .car-image {
+            width: 100%;
+            height: 600px;
+            object-fit: cover;
+            border-radius: 20px;
+            transition: transform 0.3s ease-out;
+            pointer-events: none; 
+            -webkit-user-drag: none;
+        }
+
+        .thumbnails-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            overflow-x: auto;
+        }
+
+        .thumbnail {
+            width: 80px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .thumbnail.active {
+            opacity: 1;
+            border-color: var(--accent-color);
+        }
+
+        .thumbnail:hover {
+            opacity: 1;
+        }
+
+        .arrow-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .arrow-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .prev-btn {
+            left: 20px;
+        }
+
+        .next-btn {
+            right: 20px;
+        }
+
+        .image-counter {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .no-image-placeholder {
+            width: 100%;
+            height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            color: #adb5bd;
+            border-radius: 20px;
+        }
+
+        .car-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .info-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .car-title {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .price-tag {
+            font-size: 2rem;
+            color: var(--accent-color);
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        .stock-status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .in-stock {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .out-of-stock {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .spec-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .spec-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dark);
+        }
+
+        .description-section {
+            line-height: 1.8;
+            color: #4b5563;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            padding: 1rem;
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-color);
+            color: var(--text-dark);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .car-info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            background: #1e3c72;
+            color: white;
+            padding: 1rem;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h5 {
+            font-size: 1.1rem;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .contact-form {
+            padding: 1rem;
+        }
+
+        .form-sections {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .form-section h6 {
+            color: #1e3c72;
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 0.8rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.3rem;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.5rem 0.8rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .form-control[readonly] {
+            background-color: #f7fafc;
+        }
+
+        .form-footer {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: flex-end;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        .cancel-btn, .confirm-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .cancel-btn {
+            background: none;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+        }
+
+        .confirm-btn {
+            background: #1e3c72;
+            border: none;
+            color: white;
+        }
+
+        @media (max-width: 480px) {
+            .modal-content {
+                width: 95%;
+                margin: 1rem;
+            }
+        }
+
+        .hover-effect {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-effect:hover {
+            transform: translateY(-2px);
+        }
+        
+        .user-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 1rem;
+        }
+        
+        .navbar-brand:hover .fa-car-side {
+            transform: translateX(5px);
+            transition: transform 0.3s ease;
+        }
+
+        .success-content {
+            text-align: center;
+            padding: 2rem;
+            max-width: 400px;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: #48bb78;
+            margin-bottom: 1rem;
+        }
+
+        .success-message h3 {
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .success-message p {
+            color: #4a5568;
+            margin-bottom: 1.5rem;
+        }
+
+        .ok-btn {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 0.5rem 2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .ok-btn:hover {
+            background: #2a4e8f;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-cog"></i>
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Home</a>
+                {% if user.is_authenticated %}
+                    <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                    {% if user.role == 'customer' %}
+                        <a class="nav-link">{{ full_name }}</a>
+                    {% else %}
+                        <a class="nav-link">{{ user.email }}</a>
+                    {% endif %}
+                {% else %}
+                    <a class="nav-link" href="{% url 'login' %}">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="car-detail-container">
+        <!-- Car Image Section -->
+        <div class="car-image-container">
+            {% if car.images.all %}
+                <img id="mainCarImage" src="{{ car.images.first.image.url }}" alt="{{ car.make }} {{ car.model }}" class="car-image">
+                <button class="arrow-btn prev-btn" onclick="previousImage()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="arrow-btn next-btn" onclick="nextImage()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <!-- Thumbnails -->
+                <div class="thumbnails-container">
+                    {% for image in car.images.all %}
+                        <img src="{{ image.image.url }}" 
+                             alt="Thumbnail {{ forloop.counter }}" 
+                             class="thumbnail {% if forloop.first %}active{% endif %}"
+                             onclick="showImage({{ forloop.counter0 }})">
+                    {% endfor %}
+                </div>
+                <!-- Image counter -->
+                <div class="image-counter">
+                    <span id="currentImageIndex">1</span>/<span>{{ car.images.count }}</span>
+                </div>
+            {% else %}
+                <div class="no-image-placeholder">
+                    <i class="fas fa-car fa-4x"></i>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Car Information Grid -->
+        <div class="car-info-grid">
+            <!-- Main Info Card -->
+            <div class="info-card">
+                <h1 class="car-title">{{ car.make }} {{ car.model }}</h1>
+                <div class="price-tag">${{ car.price }}</div>
+                
+                {% if car.stock > 0 %}
+                    <div class="stock-status in-stock">
+                        <i class="fas fa-check-circle me-2"></i>In Stock ({{ car.stock }} available)
+                    </div>
+                {% else %}
+                    <div class="stock-status out-of-stock">
+                        <i class="fas fa-times-circle me-2"></i>Out of Stock
+                    </div>
+                {% endif %}
+
+                <div class="description-section">
+                    <h3 class="mb-3">Description</h3>
+                    <p>{{ car.description|default:"No description available" }}</p>
+                </div>
+            </div>
+
+            <!-- Specifications Card -->
+            <div class="info-card">
+                <h3 class="mb-4">Specifications</h3>
+                <div class="specs-grid">
+                    <div class="spec-item">
+                        <div class="spec-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <small>Year</small>
+                            <div>{{ car.year }}</div>
+                        </div>
+                    </div>
+            
+                    <div class="spec-item">
+                        <div class="spec-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div>
+                            <small>Power</small>
+                            <div>{{ car.power }} HP</div>
+                        </div>
+                    </div>
+            
+                    <div class="spec-item">
+                        <div class="spec-icon">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <div>
+                            <small>Category</small>
+                            <div>{{ car.category }}</div>
+                        </div>
+                    </div>
+            
+                    <div class="spec-item">
+                        <div class="spec-icon">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <div>
+                            <small>Type</small>
+                            <div>{{ car.type }}</div>
+                        </div>
+                    </div>
+            
+                    <div class="spec-item">
+                        <div class="spec-icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div>
+                            <small>Transmission</small>
+                            <div>{{ car.transmission }}</div>
+                        </div>
+                    </div>
+            
+                    <div class="spec-item">
+                        <div class="spec-icon">
+                            <i class="fas fa-gas-pump"></i>
+                        </div>
+                        <div>
+                            <small>Gas Type</small>
+                            <div>{{ car.gas }} Octane</div>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Purchase Button -->
+                {% if request.user.is_authenticated %}
+                    <button type="button" class="btn btn-primary w-100" onclick="openPurchaseModal()">
+                        <i class="fas fa-shopping-cart me-2"></i>Purchase Now
+                    </button>
+
+                    <!-- Purchase Modal -->
+                    <div id="purchaseModal" class="modal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5>Purchase {{ car.make }} {{ car.model }}</h5>
+                                <button type="button" class="modal-close" onclick="closePurchaseModal()">&times;</button>
+                            </div>
+                            <form method="POST" action="{% url 'create_order' car.id %}" class="contact-form">
+                                {% csrf_token %}
+                                <div class="form-sections">
+                                    <div class="form-section">
+                                        <h6>Personal Information</h6>
+                                        <div class="form-group">
+                                            <label>Full Name</label>
+                                            <input type="text" class="form-control" name="fullName" 
+                                                   value="{{ request.user.customer.full_name }}" readonly>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Email</label>
+                                            <input type="email" class="form-control" name="email" 
+                                                   value="{{ request.user.email }}" readonly>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Phone Number</label>
+                                            <input type="text" class="form-control" name="phone" 
+                                                   value="{{ request.user.customer.phone_number }}" readonly>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-section">
+                                        <h6>Delivery Details</h6>
+                                        <div class="form-group">
+                                            <label>Delivery Address</label>
+                                            <input type="text" class="form-control" name="address" required 
+                                                   placeholder="Enter your delivery address">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Payment Method</label>
+                                            <select class="form-control" name="paymentMethod" required>
+                                                <option value="" disabled selected>Select Payment Method</option>
+                                                <option value="credit">Credit Card</option>
+                                                <option value="paypal">PayPal</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-footer">
+                                    <button type="button" class="cancel-btn" onclick="closePurchaseModal()">Cancel</button>
+                                    <button type="submit" class="confirm-btn">Confirm Purchase</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Success Modal -->
+                    <div id="successModal" class="modal">
+                        <div class="modal-content success-content">
+                            <div class="success-message">
+                                <i class="fas fa-check-circle success-icon"></i>
+                                <h3>Thank You for Your Purchase!</h3>
+                                <p>We will contact you soon with further details.</p>
+                                <button class="ok-btn" onclick="closeSuccessModal()">OK</button>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary w-100">
+                        <i class="fas fa-shopping-cart me-2"></i>Purchase Now
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentImageIndex = 0;
+        const images = [
+            {% for image in car.images.all %}
+                "{{ image.image.url }}"{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        // Initialize touch variables
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        let isSwiping = false;
+
+        function showImage(index) {
+            if (index < 0) index = images.length - 1;
+            if (index >= images.length) index = 0;
+            
+            currentImageIndex = index;
+            const mainImage = document.getElementById('mainCarImage');
+            mainImage.src = images[index];
+            
+           
+            document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
+                thumb.classList.toggle('active', i === index);
+            });
+            
+            // Update counter
+            document.getElementById('currentImageIndex').textContent = index + 1;
+        }
+
+        function nextImage() {
+            showImage(currentImageIndex + 1);
+        }
+
+        function previousImage() {
+            showImage(currentImageIndex - 1);
+        }
+
+        // Enhanced touch handling
+        const imageContainer = document.querySelector('.car-image-container');
+        
+        imageContainer.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isSwiping = true;
+            e.preventDefault(); 
+        }, { passive: false });
+
+        imageContainer.addEventListener('touchmove', function(e) {
+            if (!isSwiping) return;
+            
+            touchEndX = e.touches[0].clientX;
+            touchEndY = e.touches[0].clientY;
+            
+            // Calculate vertical scroll
+            const verticalScroll = Math.abs(touchEndY - touchStartY);
+            
+            
+            if (verticalScroll > Math.abs(touchEndX - touchStartX)) {
+                isSwiping = false;
+            } else {
+                e.preventDefault(); 
+            }
+        }, { passive: false });
+
+        imageContainer.addEventListener('touchend', function(e) {
+            if (!isSwiping) return;
+            
+            const swipeDistance = touchEndX - touchStartX;
+            const minSwipeDistance = 50;
+            
+            if (Math.abs(swipeDistance) >= minSwipeDistance) {
+                if (swipeDistance > 0) {
+                    previousImage();
+                } else {
+                    nextImage();
+                }
+            }
+            
+            isSwiping = false;
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') previousImage();
+            if (e.key === 'ArrowRight') nextImage();
+        });
+
+        // Initialize the first image
+        showImage(0);
+
+        function openPurchaseModal() {
+            document.getElementById('purchaseModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePurchaseModal() {
+            document.getElementById('purchaseModal').classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('purchaseModal');
+            if (event.target === modal) {
+                closePurchaseModal();
+            }
+        }
+
+        
+        document.querySelector('.modal-content').onclick = function(event) {
+            event.stopPropagation();
+        }
+
+        function showSuccessModal() {
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+            window.location.href = "{% url 'index' %}"; 
+        }
+
+        // Modify your form submission
+        document.querySelector('.contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    closePurchaseModal();
+                    showSuccessModal();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

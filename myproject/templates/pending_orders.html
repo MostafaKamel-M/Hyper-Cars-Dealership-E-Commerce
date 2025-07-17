@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Orders</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+
+        .container {
+            margin-top: 30px;
+            padding: 0 25px;
+        }
+
+        .page-header {
+            background: white;
+            padding: 20px 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        .page-header h2 {
+            margin: 0;
+            color: #2a5298;
+            font-weight: 600;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            padding: 20px;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .table td, .table th {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .form-select {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .form-select:focus, .form-control:focus {
+            border-color: #2a5298;
+            box-shadow: 0 0 0 0.2rem rgba(42,82,152,0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border: none;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(42,82,152,0.2);
+        }
+
+        
+        .customer-name {
+            font-weight: 500;
+            color: #2a5298;
+        }
+
+        .order-id {
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        .car-details {
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .table-responsive {
+                border-radius: 10px;
+            }
+        }
+
+        .btn-group {
+            gap: 8px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220,53,69,0.2);
+        }
+
+        .btn {
+            flex: 1;
+            white-space: nowrap;
+        }
+
+        .btn i {
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Car Dealership</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'staff_dashboard' %}">Dashboard</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h2><i class="fas fa-clipboard-list mr-2"></i>Pending Orders</h2>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Order Date</th>
+                            <th>Customer Info</th>
+                            <th>Payment & Delivery</th>
+                            <th>Car Details</th>
+                            <th>Assignment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in pending_orders %}
+                        <tr>
+                            <td class="order-id">#{{ order.id }}</td>
+                            <td>{{ order.order_date|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="customer-name">{{ order.customer.full_name }}</div>
+                                <small class="text-muted">
+                                    <i class="fas fa-envelope mr-1"></i>{{ order.customer.user.email }}<br>
+                                    <i class="fas fa-phone mr-1"></i>{{ order.customer.phone_number }}
+                                </small>
+                            </td>
+                            <td>
+                                <div><i class="fas fa-credit-card mr-1"></i>{{ order.payment_method }}</div>
+                                <small class="text-muted">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>{{ order.address }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="car-details">
+                                    <i class="fas fa-car mr-1"></i>{{ order.car.make }} {{ order.car.model }}
+                                </div>
+                            </td>
+                            <td>
+                                <form method="POST" action="{% url 'pending_orders' %}" class="assignment-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                                    <div class="form-group mb-2">
+                                        <select class="form-select" name="driver" required>
+                                            <option value="">Select Driver</option>
+                                            {% for driver in drivers %}
+                                            <option value="{{ driver.user_id }}">{{ driver.full_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-2">
+                                        <input type="date" class="form-control delivery-date" name="delivery_date" required>
+                                    </div>
+                                    <div class="btn-group d-flex">
+                                        <button type="submit" name="action" value="confirm" class="btn btn-primary">
+                                            <i class="fas fa-check mr-1"></i>Confirm
+                                        </button>
+                                        <button type="submit" name="action" value="cancel" class="btn btn-danger">
+                                            <i class="fas fa-times mr-1"></i>Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var today = new Date();
+            today.setDate(today.getDate() + 1);
+            var tomorrow = today.toISOString().split('T')[0];
+
+            
+            var dateInputs = document.querySelectorAll('.delivery-date');
+            dateInputs.forEach(function(input) {
+                input.setAttribute('min', tomorrow);
+            });
+        });
+    </script>
+
+</body>
+</html>
